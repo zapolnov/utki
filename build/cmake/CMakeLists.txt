@@ -6,7 +6,7 @@ set(name utki)
 
 project(${name})
 
-set(srcdir "${CMAKE_CURRENT_SOURCE_DIR}/../src/${name}")
+set(srcdir "${CMAKE_CURRENT_SOURCE_DIR}/../../src/${name}")
 file(GLOB_RECURSE src RELATIVE "${srcdir}" CONFIGURE_DEPENDS "${srcdir}/*.cpp" "${srcdir}/*.hpp")
 
 set(srcs)
@@ -30,8 +30,8 @@ set_target_properties(${name} PROPERTIES CXX_EXTENSIONS OFF)
 target_include_directories(
     ${name}
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../src>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../src_deps>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../src>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../src_deps>
         $<INSTALL_INTERFACE:include>
 )
 
@@ -40,7 +40,7 @@ if(NOT UTKI_DISABLE_INSTALL)
 # install library header files preserving directory hierarchy
 install(
     DIRECTORY
-        "${CMAKE_CURRENT_SOURCE_DIR}/../src/${name}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../src/${name}"
     DESTINATION
         "${CMAKE_INSTALL_INCLUDEDIR}"
     FILES_MATCHING PATTERN
