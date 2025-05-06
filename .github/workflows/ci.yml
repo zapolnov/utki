@@ -40,7 +40,9 @@ jobs:
       - name: prepare debian package
         run: myci-deb-prepare.sh
       - name: install deps
-        run: myci-deb-install-build-deps.sh
+        run: |
+          cd build
+          myci-deb-install-build-deps.sh
       - name: add DE locale
         # needed for testing that locale with "," as decimal delimiter does not break the parsing with string_parser
         run: |
@@ -66,6 +68,17 @@ jobs:
           disable_search: true
           files: cobertura.xml
           # flags: unittests # optional
+          name: codecov-umbrella # optional
+          fail_ci_if_error: true # optional (default = false)
+          verbose: true # optional (default = false)
+      - name: upload test report to codecov.io
+        if: always() # even if previous steps fail, this one needs to be run
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          # do not search for coverage files automatically, upload only specified files
+          disable_search: true
+          files: tests/unit/out/gcov/junit.xml
           name: codecov-umbrella # optional
           fail_ci_if_error: true # optional (default = false)
           verbose: true # optional (default = false)
@@ -103,7 +116,9 @@ jobs:
       - name: prepare debian package
         run: myci-deb-prepare.sh
       - name: install deps
-        run: myci-deb-install-build-deps.sh
+        run: |
+          cd build
+          myci-deb-install-build-deps.sh
       - name: add DE locale
         # needed for testing that locale with "," as decimal delimiter does not break the parsing with string_parser
         run: |
@@ -147,11 +162,13 @@ jobs:
         uses: myci-actions/checkout@main
       - name: set PACKAGE_VERSION
         uses: myci-actions/export-env-var@main
-        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh debian/changelog)}
+        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh)}
       - name: prepare debian package
         run: myci-deb-prepare.sh
       - name: install deps
-        run: myci-deb-install-build-deps.sh
+        run: |
+          cd build
+          myci-deb-install-build-deps.sh
       - name: add DE locale
         # needed for testing that locale with "," as decimal delimiter does not break the parsing with string_parser
         run: |
@@ -160,7 +177,7 @@ jobs:
       - name: build
         run: |
           # clang-tidy is too old on arm32/arm64, disable the lint
-          make config=cpp20 ${{ ((matrix.labels[0] == 'arm32' || matrix.labels[0] == 'arm64') && 'lint=off') || '' }}
+          make config=cpp20 ${{ (matrix.labels[0] == 'ubuntu-24.04-arm' && 'lint=off') || '' }}
       - name: test
         run: |
           make config=cpp20 test
@@ -186,7 +203,7 @@ jobs:
           - {os: ubuntu, codename: noble, image_owner: }
           # - {os: raspbian, codename: buster, image_owner: igagis/, labels: [ubuntu-24.04-arm]}
           # - {os: raspbian, codename: bullseye, image_owner: igagis/, labels: [ubuntu-24.04-arm]}
-          - {os: raspbian, codename: bookworm, image_owner: igagis/, labels: [ubuntu-24.04-arm]}
+          # - {os: raspbian, codename: bookworm, image_owner: igagis/, labels: [ubuntu-24.04-arm]}
     runs-on: ${{ (matrix.labels == '' && 'ubuntu-latest') || matrix.labels }}
     container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     name: linux - ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
@@ -212,11 +229,13 @@ jobs:
         uses: myci-actions/checkout@main
       - name: set PACKAGE_VERSION
         uses: myci-actions/export-env-var@main
-        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh debian/changelog)}
+        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh)}
       - name: prepare debian package
         run: myci-deb-prepare.sh
       - name: install deps
-        run: myci-deb-install-build-deps.sh
+        run: |
+          cd build
+          myci-deb-install-build-deps.sh
       - name: add DE locale
         # needed for testing that locale with "," as decimal delimiter does not break the parsing with string_parser
         run: |
@@ -224,8 +243,8 @@ jobs:
           locale-gen
       - name: build
         run: |
+          cd build
           dpkg-buildpackage --unsigned-source --unsigned-changes
-          mv ../*.*deb .
       - name: upload deb packages to artifacts
         uses: actions/upload-artifact@v4
         # do not fail the job if the step fails
@@ -266,7 +285,7 @@ jobs:
   #       uses: myci-actions/checkout@main
   #     - name: set PACKAGE_VERSION
   #       uses: myci-actions/export-env-var@main
-  #       with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh debian/changelog)}
+  #       with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh)}
   #     # makepkg needs to install dependency packages, so nobody user needs sudo rights
   #     - name: add nobody to sudoers
   #       run: |
@@ -353,7 +372,7 @@ jobs:
       uses: myci-actions/checkout@main
     - name: set PACKAGE_VERSION
       uses: myci-actions/export-env-var@main
-      with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh debian/changelog)}
+      with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh)}
     - name: add cocoapods repo
       run: pod repo add --silent cppfw https://$MYCI_GIT_USERNAME@github.com/cppfw/cocoapods-repo.git
     - name: install deps
@@ -397,7 +416,7 @@ jobs:
         install: myci
     - name: set PACKAGE_VERSION
       uses: myci-actions/export-env-var@main
-      with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh debian/changelog)}
+      with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh)}
     - name: build
       run: |
         cd android
@@ -447,7 +466,7 @@ jobs:
     - name: git clone
       uses: myci-actions/checkout@main
     - name: prepare pacman package
-      run: myci-apply-version.sh --version $(myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in
+      run: myci-apply-version.sh msys2/PKGBUILD.in
     - name: build
       # to make makepkg-mingw build only one architecture we need to set the MINGW_ARCH
       env: {MINGW_ARCH: '${{ matrix.repo }}'}
@@ -583,7 +602,7 @@ jobs:
           submodules: false
       - name: set PACKAGE_VERSION
         uses: myci-actions/export-env-var@main
-        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh debian/changelog)}
+        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh)}
         if: startsWith(github.ref, 'refs/tags/')
       - name: build
         run: |
@@ -644,7 +663,7 @@ jobs:
       #   with: {name: PATH, value: "$HOMEBREW_PREFIX/opt/make/libexec/gnubin:$PATH"}
       - name: set PACKAGE_VERSION
         uses: myci-actions/export-env-var@main
-        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh debian/changelog)}
+        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh)}
         if: startsWith(github.ref, 'refs/tags/')
       - name: build
         run: |
@@ -689,7 +708,7 @@ jobs:
           submodules: false
       - name: set PACKAGE_VERSION
         uses: myci-actions/export-env-var@main
-        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh debian/changelog)}
+        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh)}
         if: startsWith(github.ref, 'refs/tags/')
       - name: build
         run: |
