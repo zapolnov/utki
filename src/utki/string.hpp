@@ -398,7 +398,7 @@ public:
 			// TODO: use std::from_chars() when float/double/long double versions of it are well supported by compilers
 			res = utki::from_chars(
 				this->view.data(), //
-				&*this->view.end(),
+				this->view.data() + this->view.length(),
 				value
 			);
 		} else {
@@ -450,7 +450,7 @@ public:
 
 			res = std::from_chars(
 				this->view.data(), //
-				&*this->view.end(),
+				this->view.data() + this->view.length(),
 				value,
 				base
 			);
